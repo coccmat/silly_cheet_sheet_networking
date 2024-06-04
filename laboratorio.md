@@ -70,3 +70,25 @@ rimuovere interfaccia di rete
 
 - `ip addr del <address> dev <iface>`
 - `ifconfig <iface> 0`
+
+## livello ip 
+## ip forwarding 
+possibilità di accettare pacchetti e mandarli verso altre reti.
+per abilitarla usare il comando temporaneo `sysctl -w net.ipv4.ip_forward=1`
+per farlo in modo definitivo
+`sysctl -p /etc/sysctl.conf` dopo aver messo il parametro `=1` nel file.
+
+
+per veserele tabelle di routing `route -n` oppune `/sbin/route` o `ip route show`
+
+3 diversi tipi di routing da aggiungere 
+ 
+ 1) routing tramite singolo host
+    -  `route add <HOST> gw <gateway>`
+    - se voglio xontattare `host` devo contattare `gateway`
+2) routing per sottorete
+    - `route add -net <net> netmask <netmask> gw <GW>`
+    - per parlare con la rete `net` inoltrare alla macchina `gw`
+3) default gateway
+    + `route add default gw 192.168.1.254`
+    + se nessuna delle regole precedenti funziona mandare al gatway
