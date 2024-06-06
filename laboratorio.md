@@ -92,3 +92,49 @@ per veserele tabelle di routing `route -n` oppune `/sbin/route` o `ip route show
 3) default gateway
     + `route add default gw 192.168.1.254`
     + se nessuna delle regole precedenti funziona mandare al gatway
+## VLAN
+
+* access link (non sanno di far parte di una Vlan)
+
+* Trunk link connette dispositivi che sanno di essere in una VLAN
+
+### vlan trunk 
+sul dispositivo si setta 
+`ip link add link <eth fisica> <virtual interface> type vlan id <N vlan>`
+
+su linux per rendere la configurazione permanente
+```
+auto <physif>.<N>
+iface <physif>.<N> inet static
+address <ip_address>
+netmask <netmask>
+gateway <ip_addr_gateway>
+```
+
+comandi su switch 
+* `port`
+* `vlan`&rarr; gestione vlan 
+* `hash` &rarr; gestione hash table 
+
+### vlan 
+`vlan/create vlan_n` crea la vlan di valore vlan_n
+
+`port/setvlan port_n vlan_n` &rarr; untagged quindi access link quindi accetta pacchetti non taggati
+
+`vlan/addport vlan_n port_n` &rarr; tagged quindi trunk link 
+
+### configuazione host
+configurazione temporanea:
+``` bash
+ip link add link eth0 vlan30 type vlan id 30
+ip address add 192.168.3.1/24 dev vlan30
+ip link set dev vlan30 up
+```
+configurazione permanente:
+
+```bash
+auto eth0.30
+iface eth0.30 inet static
+    address 192.168.3.1
+    netmask 255.255.255.0
+```
