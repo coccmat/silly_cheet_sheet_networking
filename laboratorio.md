@@ -98,6 +98,15 @@ per veserele tabelle di routing `route -n` oppune `/sbin/route` o `ip route show
     `ifconfig eth0 1.1.1.1/32`
 
     `route add -host 2.2.2.2 dev eth0`
+### alias di rete e indirizzi multipli
+`ip addr add dev eth0 192.168.0.1/24`
+su interfaces va specificato con il  "__:__"
+```bash
+auto eth0:0
+iface eth0:0 inet static
+    address 192.168.0.1
+    netmask 255.255.255.0
+```
 ## VLAN
 
 * access link (non sanno di far parte di una Vlan)
@@ -206,3 +215,56 @@ iptables -t nat -A PREROUTING -j DNAT \
 `iptables-save > /etc/iptables/rules.v4` 
 
 `iptables-restore < /etc/iptables/rules.v4`
+
+## Firewall
+
+2 policy 
+
+1) `iptables -P INPUT ACCEPT`
+    - accetta tutto ciò che non è negato
+2) `iptables -P INPUT DROP` rifiuta tutto cio che non è specificatamente accettato 
+
+```bash 
+iptables -A <chain>
+-i <input-interface>
+-o <output-interface>
+-s <source-ip/network>
+-d <destination-ip/network>
+-p {udp,tcp} --dport <destination-port> --sport <source-port>
+-m state --state <states>
+```
+### esempi su un host
+Accettare il nuovo traffico HTTP in ingresso
+```
+iptables -A INPUT -p tcp --dport 80 \
+-m state --state NEW,ESTABLISHED -j ACCEPT
+```
+Accettare il traffico HTTP in uscita solo se è relativo a richieste già
+accettate in ingresso
+```
+iptables -A OUTPUT -p tcp --sport 80 \
+-m state --state ESTABLISHED -j ACCEPT
+```
+### esempi su un router
+```
+iptables -A FORWARD -p tcp --dport 80 \
+-i eth0 -o eth1 \
+-d <ip-address> \
+-m state --state NEW,ESTABLISHED -j ACCEPT
+```
+Accettare il traffico HTTP in uscita solo se è relativo a richieste già
+accettate in ingresso
+```
+iptables -A FORWARD -p tcp --sport 80 \
+-i eth1 -o eth0 \
+-s <ip-address> \
+-m state --state ESTABLISHED -j ACCEPT
+```
+
+### altre opzioni specifiche 
+
+`-p icmp --icmp-type {echo-request,echo-reply}`
+specifica la tipologia di icmp 
+
+o possiamo specificare il codice
+`-p icmp --icmp-type <icmp-code>`
