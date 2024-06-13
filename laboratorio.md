@@ -268,3 +268,84 @@ specifica la tipologia di icmp
 
 o possiamo specificare il codice
 `-p icmp --icmp-type <icmp-code>`
+
+## DHCP
+### Lato client
+run time configuration `dhclient -i <iface>` e per farlo runnare `dhclient -r`
+
+invece se si volesse fare staticamnte `inet dhcp` invece di `inet static`
+
+`/etc/init.d/isc-dhcp-server start`
+
+configurazioni possibili
+
+`etc/dhcp/dhclient.conf`:
+* __retry__: Tempo che intercorre tra una ricerca e la successiva se
+il server non è stato trovato
+* __reboot__: tenta di riottenere lo stesso IP che ha ottenuto in
+precedenza.
+* __request__: options che il client vuole ricevere durante
+un'offerta.
+* __require__: opzioni che il cliente vuole necessariamente
+accettare da un'offerta.
+* __send__: opzioni da spedire al server
+esempio di configurazione su `etc/dhcp/dhclient.conf`:
+```bash 
+send dhcp-lease-time 3600;
+request subnet-mask, broadcast-address, time-
+offset, routers,domain-name, domain-name-
+servers, domain-search, host-name,;
+require subnet-mask, domain-name-
+servers,host-name;
+timeout 60;
+retry 60;
+```
+### Lato server
+`etc/dhcp/dhclient.conf`
+e poi `/etc/init.d/isc-dhcp-server start`
+
+esempio:
+```
+# Setup della sottorete:
+subnet 192.168.0.0 netmask 255.255.255.0 {
+range 192.168.0.100 192.168.0.253;
+option subnet-mask 255.255.255.0;
+option routers 192.168.0.254;
+}
+# Binding manuale tramite MAC address
+host mynotebook {
+hardware ethernet AA:AA:AA:AA:AA:AA;
+fixed-address 192.168.0.10;
+}
+```
+ tutti i parametri:
+* __option subnet-mask__: netmask del default gateway
+* __option broadcast-address__
+* __option routers :__ IP del default gateway
+* __option domain-name__: definizione del nome del domain
+* __option domain-name__-servers: definizione del server DNS
+* __option static-routes__: definizione di route statiche (NON CIDR)
+* __option smtp-server__: definizione dei mail-server
+* __option ntp-servers__:, definizione dei time server
+* __option netbios-name__-servers: definizione dei WINS-Server
+* __default-lease-time__: validità standard di un indirizzo IP
+* __max-lease-time__:, tempo massimo di validità di un indirizzo IP
+assegnato.
+
+per le regole di routing dinamico bisogna inserire
+`option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;`
+e poi :
+`option rfc3442-classless-static-routes <nbits>, <netid>, <gateway>;`
+dove 
+- `nbits` notazione in bit della netmask;
+- `netid` ottetti significativi del netid target separati da virgola;
+- `gateway` indirizzo IP del gateway
+
+esempio: `option rfc3442-classless-static-routes 24, 192,168,1, 192,168,0,254;`
+default gateway`option rfc3442-classless-static-routes 0, <gateway>`
+
+possiamo inserire più regole di routing in una riga
+`option rfc3442-classless-static-routes 0, 192,168,1,254, 24, 192,168,0, 192,168,1,253;`
+
+### dhcp relay 
+per quando il server dhcp sta su una lan differente (c'è un router di mezzo)
